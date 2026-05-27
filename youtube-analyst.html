@@ -15,6 +15,10 @@
 
   <style>
     *,*::before,*::after { box-sizing: border-box; }
+    /* The `hidden` attribute must win over the display rules below, or the
+       result panel / stop buttons / sheet+slides links show before they have
+       an href and look broken (un-clickable). */
+    [hidden] { display: none !important; }
 
     :root {
       --blue:     #2e2be6;
