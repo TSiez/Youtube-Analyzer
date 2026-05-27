@@ -165,8 +165,9 @@ const server = createServer(async (req, res) => {
   res.end("Not found");
 });
 
-server.listen(PORT, () => {
-  console.log(`[serve] YouTube Analyst dashboard → http://localhost:${PORT}`);
+// Bind 0.0.0.0 so cloud platforms (Render, etc.) detect the open port.
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`[serve] YouTube Analyst dashboard → http://0.0.0.0:${PORT}`);
   console.log(`[serve]   /analyze?url=…    URL-mode analyzer (primary)`);
   console.log(`[serve]   /run?channels=…   legacy batch pipeline`);
   console.log(`[serve] python: ${PYTHON}   (override with PYTHON=… env)`);

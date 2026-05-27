@@ -13,6 +13,14 @@ import sys
 import traceback
 from pathlib import Path
 
+# Force UTF-8 on stdout/stderr so emoji and special chars in video titles /
+# AI output don't crash the run on Windows (default cp1252).
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # Make the project root importable when running this file directly.
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
