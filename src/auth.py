@@ -56,13 +56,26 @@ def get_credentials(scopes: Iterable[str] | None = None) -> Credentials:
 
     # From here we'd need interactive consent (a browser). Refuse on servers.
     if os.getenv("OAUTH_NONINTERACTIVE") == "1":
+        try:
+            secrets_listing = sorted(os.listdir("/etc/secrets"))
+        except OSError:
+            secrets_listing = "(/etc/secrets does not exist)"
+
+        if creds is None:
+            why = f"token.json not found or unreadable at: {TOKEN_PATH}"
+        elif not creds.refresh_token:
+            why = "token.json has NO refresh_token — regenerate it locally (delete token.json, re-run, approve consent)"
+        else:
+            why = "token.json present but invalid and could not refresh"
+
         raise RuntimeError(
-            "Google auth needs a valid token.json, but none is usable and "
-            "OAUTH_NONINTERACTIVE=1 (no browser available on this host).\n"
-            "Fix: generate token.json locally (run a Weekly Trends report once and "
-            "approve the browser prompt), then add credentials.json AND token.json as "
-            "Render secret files. Set the OAuth consent screen to 'In production' so the "
-            "refresh token does not expire every 7 days."
+            "Google auth could not obtain credentials (OAUTH_NONINTERACTIVE=1, no browser).\n"
+            f"  reason: {why}\n"
+            f"  token path checked:       {TOKEN_PATH}  (exists={TOKEN_PATH.exists()})\n"
+            f"  credentials path checked: {CREDENTIALS_PATH}  (exists={CREDENTIALS_PATH.exists()})\n"
+            f"  /etc/secrets contents:    {secrets_listing}\n"
+            "Fix on Render: add Secret Files named EXACTLY 'credentials.json' and 'token.json' "
+            "(Environment > Secret Files), then redeploy. They mount at /etc/secrets/."
         )
 
     if not CREDENTIALS_PATH.exists():
