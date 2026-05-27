@@ -13,9 +13,16 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
-      # Optional: weekly-trends (Google) settings. Note that the OAuth step is
-      # interactive and won't complete on a headless server without a pre-made
-      # token.json — single-video mode works without any of these.
+      # Weekly-trends (Sheets / Slides / Gmail). To make these work headless:
+      #   1. Add two Secret Files in the Render dashboard (Environment > Secret Files):
+      #        credentials.json  -> your OAuth Desktop client JSON
+      #        token.json        -> the token generated locally (has the refresh token)
+      #      Render mounts them at /etc/secrets/<name>, which the app reads automatically.
+      #   2. OAUTH_NONINTERACTIVE=1 (below) tells the app never to attempt a browser flow.
+      #   3. Publish the OAuth consent screen ("In production") so the refresh token
+      #      doesn't expire every 7 days (Testing-mode tokens do).
+      - key: OAUTH_NONINTERACTIVE
+        value: "1"
       - key: SENDER_EMAIL
         sync: false
       - key: RECIPIENT_EMAIL

@@ -10,10 +10,26 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ENV_PATH = PROJECT_ROOT / ".env"
-CREDENTIALS_PATH = PROJECT_ROOT / "credentials.json"
-TOKEN_PATH = PROJECT_ROOT / "token.json"
 
 load_dotenv(ENV_PATH)
+
+
+def _resolve_secret(env_key: str, filename: str) -> Path:
+    """Locate an OAuth file across local and cloud setups, in priority order:
+    1. explicit env override (e.g. GOOGLE_TOKEN_FILE)
+    2. Render-style secret-file mount at /etc/secrets/<filename>
+    3. the project root (local default)"""
+    override = os.getenv(env_key)
+    if override:
+        return Path(override)
+    secret_mount = Path("/etc/secrets") / filename
+    if secret_mount.exists():
+        return secret_mount
+    return PROJECT_ROOT / filename
+
+
+CREDENTIALS_PATH = _resolve_secret("GOOGLE_CREDENTIALS_FILE", "credentials.json")
+TOKEN_PATH = _resolve_secret("GOOGLE_TOKEN_FILE", "token.json")
 
 
 def _split_csv(value: str | None) -> list[str]:
