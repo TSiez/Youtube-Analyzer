@@ -1,0 +1,13 @@
+{
+  "name": "youtube-analyst",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "YouTube Analyst — single-video receipt analysis + weekly-trends pipeline. Node server fronts a Python pipeline.",
+  "scripts": {
+    "start": "node serve.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

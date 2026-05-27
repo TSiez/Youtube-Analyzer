@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>YouTube Analyst — analyze.exe</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=VT323&family=Sacramento&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    *,*::before,*::after { box-sizing: border-box; }
+
+    :root {
+      --blue:     #2e2be6;
+      --blue-deep:#1d1ab5;
+      --beige:    #e8e3d3;
+      --beige-2:  #d7d1bd;
+      --window:   #f5f2ea;
+      --ink:      #161616;
+      --red:      #e02a20;
+      --yellow:   #f3c016;
+      --pink:     #ff45ad;
+      --gray:     #a39d8a;
+      --line:     #c5bfab;
+      --term-bg:  #0d0e1c;
+      --term-fg:  #9bf0a0;
+
+      --display: 'Anton', 'Arial Narrow', sans-serif;
+      --pixel:   'VT323', ui-monospace, monospace;
+      --body:    'Archivo', system-ui, sans-serif;
+      --script:  'Sacramento',
+    }
+
+    html { background: var(--blue); }
+    body {
+      margin: 0; padding: 0;
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 16px; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      background:
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 3px),
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.10), transparent 40%),
+        radial-gradient(circle at 84% 76%, rgba(255,72,173,0.18), transparent 42%),
+        var(--blue);
+      background-attachment: fixed;
+    }
+    .pixel { font-family: var(--pixel); }
+    a { color: var(--ink); }
+
+    /* ── Window component (OS dialog) ── */
+    .win { background: var(--window); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); position: relative; }
+    .win-bar { display: flex; align-items: center; gap: 8px; background: var(--beige-2); border-bottom: 2px solid var(--ink);
+      padding: 5px 8px; font-family: var(--pixel); font-size: 17px; line-height: 1; color: var(--ink);
+      background-image: repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,0.05) 6px 7px); }
+    .win-bar .title { font-family: var(--pixel); font-size: 17px; letter-spacing: 0.02em; text-transform: lowercase; }
+    .win-bar .ctrls { margin-left: auto; display: flex; gap: 5px; }
+    .win-bar .ctrls b { width: 16px; height: 14px; border: 1.5px solid var(--ink); background: var(--window); display: inline-flex;
+      align-items: center; justify-content: center; font-family: var(--pixel); font-size: 12px; line-height: 1; }
+    .win-body { padding: 18px 18px 20px; }
+
+    /* ── Menu bar ── */
+    .menubar { position: sticky; top: 0; z-index: 30; background: var(--beige); border-bottom: 2px solid var(--ink);
+      box-shadow: 0 3px 0 rgba(0,0,0,0.25); }
+    .menubar-inner { max-width: 1120px; margin: 0 auto; padding: 0 18px; height: 38px; display: flex; align-items: center; gap: 18px; }
+    .menubar .apple { font-family: var(--display); font-size: 18px; color: var(--ink); letter-spacing: 0.02em; }
+    .menubar .apple b { color: var(--red); }
+    .menubar .menu { font-family: var(--pixel); font-size: 18px; color: var(--ink); display: flex; gap: 16px; }
+    .menubar .menu span { cursor: default; }
+    .menubar .spacer { flex: 1; }
+    .status-pill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--pixel); font-size: 16px; color: var(--ink);
+      border: 1.5px solid var(--ink); background: var(--window); padding: 2px 9px; }
+    .status-pill .pulse { width: 9px; height: 9px; border: 1.5px solid var(--ink); background: var(--gray); }
+    .status-pill.ready .pulse { background: #2fb84a; animation: blink 1.4s steps(2,end) infinite; }
+    .status-pill.offline .pulse { background: var(--red); }
+    @keyframes blink { 50% { opacity: 0.35; } }
+
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 30px 18px 70px; position: relative; z-index: 1; }
+
+    /* ── Hero ── */
+    .hero { position: relative; text-align: center; padding: 18px 0 8px; }
+    .bigword { font-family: var(--display); font-size: clamp(76px, 18vw, 200px); line-height: 0.82; letter-spacing: 0.01em;
+      color: var(--window); margin: 0; text-shadow: 6px 6px 0 var(--ink), 12px 12px 0 var(--red); }
+    .subword { font-family: var(--display); font-size: clamp(20px, 4vw, 34px); color: var(--yellow); -webkit-text-stroke: 1.5px var(--ink);
+      text-shadow: 3px 3px 0 var(--ink); margin: 6px 0 0; letter-spacing: 0.04em; }
+    .tagline { max-width: 600px; margin: 18px auto 0; font-size: 14.5px; color: var(--window); line-height: 1.6; }
+    .tagline b { color: var(--yellow); }
+
+    /* decorative stickers */
+    .burst { position: absolute; width: 64px; height: 64px; background: var(--pink); z-index: 0; pointer-events: none;
+      clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); }
+    .burst.b1 { top: 6px; left: 4%; transform: rotate(-8deg); background: var(--yellow); }
+    .burst.b2 { top: 40px; right: 6%; transform: rotate(12deg); }
+    @media (max-width: 720px) { .burst { display: none; } }
+
+    /* ── Mode tabs (segmented) ── */
+    .mode-tabs { display: flex; justify-content: center; gap: 0; margin: 28px 0 22px; }
+    .mode-tab { font-family: var(--pixel); font-size: 19px; letter-spacing: 0.03em; cursor: pointer;
+      background: var(--beige); color: var(--ink); border: 2px solid var(--ink); padding: 8px 22px; box-shadow: 4px 4px 0 var(--ink); }
+    .mode-tab + .mode-tab { border-left: 0; }
+    .mode-tab.active { background: var(--red); color: var(--window); }
+
+    /* ── Mode show/hide ── */
+    [data-mode] { display: none; }
+    [data-mode].mode-active { display: block; }
+    ol[data-mode].mode-active { display: block; }
+
+    .win.center { max-width: 720px; margin: 0 auto; }
+
+    /* System text field */
+    .field {
+      width: 100%; padding: 11px 14px; border: 2px solid var(--ink); background: #fff;
+      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.12);
+      font-family: var(--pixel); font-size: 19px; color: var(--ink);
+    }
+    .field:focus { outline: none; background: #fffef4; }
+    .field::placeholder { color: var(--gray); }
+    .field-label { display: block; font-family: var(--pixel); font-size: 17px; color: var(--ink); margin-bottom: 5px; }
+    .field-help { font-family: var(--body); font-size: 11.5px; color: var(--gray); margin-top: 5px; }
+    .label-strong { font-family: var(--display); font-size: 15px; letter-spacing: 0.04em; color: var(--red); text-transform: uppercase; margin-bottom: 12px; }
+
+    /* URL row */
+    .url-row { display: flex; gap: 12px; align-items: stretch; }
+    .url-input { flex: 1; }
+
+    /* Retro buttons */
+    .btn {
+      font-family: var(--display); font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
+      border: 2px solid var(--ink); background: var(--beige); color: var(--ink); padding: 10px 22px;
+      box-shadow: 4px 4px 0 var(--ink); transition: transform 0.08s, box-shadow 0.08s; display: inline-flex; align-items: center; gap: 9px;
+    }
+    .btn:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink); }
+    .btn:active:not(:disabled) { transform: translate(4px,4px); box-shadow: 0 0 0 var(--ink); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn.primary { background: var(--red); color: var(--window); }
+    .btn svg { width: 13px; height: 13px; }
+    .btn.small { font-size: 13px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--ink); }
+
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; font-family: var(--pixel); font-size: 17px; color: var(--gray); }
+    .example-link { font-family: var(--pixel); font-size: 16px; cursor: pointer; background: var(--window); border: 1.5px solid var(--ink); color: var(--ink); padding: 3px 10px; box-shadow: 2px 2px 0 var(--ink); }
+    .example-link:hover { background: var(--yellow); }
+
+    .check { appearance: none; width: 20px; height: 20px; border: 2px solid var(--ink); background: #fff; cursor: pointer; position: relative; flex-shrink: 0; box-shadow: inset 2px 2px 0 rgba(0,0,0,0.1); }
+    .check:checked { background: var(--red); }
+    .check:checked::after { content: "✕"; position: absolute; inset: 0; color: var(--window); font-family: var(--pixel); font-size: 16px; line-height: 18px; text-align: center; }
+    .check-row { display: flex; align-items: center; gap: 11px; font-family: var(--pixel); font-size: 19px; color: var(--ink); cursor: pointer; padding: 4px 0; }
+
+    /* ── Work area ── */
+    .work { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,3fr); gap: 22px; margin-top: 30px; align-items: start; }
+
+    /* pipeline steps */
+    .steps { list-style: none; padding: 0; margin: 0; }
+    .step { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 12px;
+      border: 2px solid var(--ink); background: var(--window); padding: 10px 12px; margin-bottom: 10px; box-shadow: 3px 3px 0 var(--ink); }
+    .step .step-num { width: 24px; height: 24px; border: 2px solid var(--ink); background: var(--beige); display: flex; align-items: center;
+      justify-content: center; font-family: var(--pixel); font-size: 15px; }
+    .step .step-text { font-family: var(--pixel); font-size: 18px; color: var(--ink); }
+    .step .dot { width: 16px; height: 16px; border: 2px solid var(--ink); background: var(--window); }
+    .step.active { background: var(--yellow); }
+    .step.active .dot { background: var(--yellow); animation: blink 0.9s steps(2,end) infinite; }
+    .step.active .dot::after { content: "▸"; font-family: var(--pixel); font-size: 13px; line-height: 12px; display: block; text-align: center; }
+    .step.done { background: #d8f0d2; }
+    .step.done .dot { background: #2fb84a; }
+    .step.done .dot::after { content: "✓"; color: var(--ink); font-family: var(--pixel); font-size: 13px; line-height: 12px; display: block; text-align: center; }
+    .step.error { background: #f7d6d3; }
+    .step.error .dot { background: var(--red); }
+    .step.error .dot::after { content: "✕"; color: var(--window); font-family: var(--pixel); font-size: 12px; line-height: 12px; display: block; text-align: center; }
+
+    /* terminal / log */
+    .term .win-bar { background: var(--ink); color: var(--term-fg); border-bottom-color: var(--ink); background-image: none; }
+    .term .win-bar .title { color: var(--term-fg); }
+    .term .win-bar .ctrls b { background: var(--ink); color: var(--term-fg); border-color: var(--term-fg); }
+    .log-body { background: var(--term-bg); font-family: var(--pixel); font-size: 17px; line-height: 1.4; padding: 14px 16px;
+      max-height: 340px; overflow-y: auto; color: var(--term-fg); }
+    .log-body::-webkit-scrollbar { width: 10px; } .log-body::-webkit-scrollbar-thumb { background: #2a2c44; }
+    .log-line { animation: linein 0.12s ease-out; }
+    @keyframes linein { from { opacity: 0; } to { opacity: 1; } }
+    .ll-err{color:#ff6b6b;} .ll-warn{color:var(--yellow);} .ll-pipe{color:#fff;} .ll-parse{color:#7fc7ff;}
+    .ll-trans{color:#c9a6ff;} .ll-sum{color:var(--term-fg);} .ll-fetch{color:#7fc7ff;} .ll-ana{color:#c9a6ff;}
+    .ll-sheet{color:#9bf0a0;} .ll-slide{color:var(--yellow);} .ll-gmail{color:#ff9ed1;} .ll-meta{color:#7d7f9c;}
+    .console-clear { margin-left: auto; cursor: pointer; background: var(--ink); border: 1.5px solid var(--term-fg); color: var(--term-fg);
+      font-family: var(--pixel); font-size: 13px; padding: 1px 8px; }
+
+    .batch-strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 16px; background: var(--ink); border-top: 2px solid var(--term-fg); }
+    .batch-strip a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-family: var(--pixel); font-size: 16px;
+      text-decoration: none; border: 1.5px solid var(--term-fg); }
+    .batch-strip .link-sheet { background: #1a1c33; color: var(--term-fg); }
+    .batch-strip .link-slides { background: var(--term-fg); color: var(--ink); }
+
+    /* ── Output: receipt collage (output.jpg) on the desktop ── */
+    #result { margin-top: 36px; }
+    .collage { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 34px; align-items: start;
+      background: #f3e7ef; border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); padding: clamp(22px,4vw,40px);
+      position: relative; overflow: hidden;
+      background-image: radial-gradient(circle at 88% 14%, rgba(255,69,173,0.18), transparent 34%),
+        radial-gradient(circle at 6% 84%, rgba(255,69,173,0.14), transparent 36%); }
+    @keyframes rise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
+    #result:not([hidden]) .collage { animation: rise 0.5s ease-out backwards; }
+
+    .cd-case { width: 220px; max-width: 70%; aspect-ratio: 1; overflow: hidden; border: 2px solid var(--ink);
+      transform: rotate(-3deg); box-shadow: 6px 6px 0 var(--ink); background: var(--ink); }
+    .cd-case img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .film-title { font-family: var(--display); font-size: 30px; line-height: 1.04; color: var(--ink); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.01em; }
+    .film-meta { font-family: var(--pixel); font-size: 17px; color: var(--ink); line-height: 1.5; }
+    .film-meta b { color: var(--red); } .film-meta a { color: var(--pink); text-decoration: none; border-bottom: 2px solid var(--pink); }
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .tag { font-family: var(--pixel); font-size: 15px; padding: 2px 10px; background: var(--yellow); border: 1.5px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+    .summary { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 16px 0 0; max-width: 52ch; }
+
+    .topblock { margin-top: 24px; }
+    .script-title { font-family: var(--script); font-size: 46px; line-height: 0.9; color: var(--pink); }
+    .takeaway-list { list-style: none; margin: 6px 0 0; padding: 0; counter-reset: tk; }
+    .takeaway { counter-increment: tk; display: grid; grid-template-columns: 28px 1fr; gap: 8px; padding: 5px 0; align-items: baseline; }
+    .takeaway::before { content: counter(tk) "."; font-family: var(--pixel); font-size: 18px; color: var(--ink); }
+    .takeaway span { font-family: var(--body); font-size: 14px; line-height: 1.5; color: var(--ink); }
+
+    /* receipt */
+    .receipt { background: #fff; border: 1px solid var(--line); padding: 28px 24px 24px; position: relative; transform: rotate(1.4deg);
+      box-shadow: 0 18px 36px -16px rgba(0,0,0,0.5); }
+    .tape { position: absolute; top: -13px; left: 50%; transform: translateX(-50%) rotate(-3deg); width: 130px; height: 28px;
+      background: rgba(255,69,173,0.5); border: 1px dashed rgba(220,40,150,0.6); }
+    .rcpt-title { font-family: var(--display); font-size: 26px; letter-spacing: 0.06em; text-align: center; color: var(--ink); }
+    .rcpt-sub { font-family: var(--pixel); font-size: 16px; text-align: center; color: var(--gray); letter-spacing: 0.1em; }
+    .rcpt-rule { border: 0; border-top: 1px dashed var(--gray); margin: 12px 0; }
+    .rcpt-line { display: flex; justify-content: space-between; gap: 12px; font-family: var(--pixel); font-size: 17px; color: var(--ink); padding: 1px 0; }
+    .rcpt-line .k { color: var(--gray); }
+    .rcpt-sec { font-family: var(--pixel); font-size: 17px; color: var(--ink); margin: 6px 0; letter-spacing: 0.06em; }
+    .moment-list { list-style: none; margin: 0; padding: 0; }
+    .moment { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 3px 0; text-decoration: none;
+      font-family: var(--pixel); font-size: 16px; color: var(--ink); border-bottom: 1px dotted var(--line); }
+    .moment:last-child { border-bottom: 0; } .moment:hover { color: var(--pink); }
+    .moment .ts { color: var(--red); }
+    .quote-list { list-style: none; margin: 0; padding: 0; }
+    .quote { font-family: var(--pixel); font-size: 15px; line-height: 1.4; color: var(--ink); padding: 3px 0; }
+    .quote::before { content: '"'; } .quote::after { content: '"'; }
+
+    @media (max-width: 900px) {
+      .work { grid-template-columns: 1fr; }
+      .collage { grid-template-columns: 1fr; gap: 26px; }
+      .receipt { transform: none; max-width: 420px; }
+    }
+
+    footer.foot { text-align: center; padding: 36px 0 20px; font-family: var(--pixel); font-size: 17px; color: var(--window); }
+    footer.foot .hand { font-family: var(--script); font-size: 26px; color: var(--yellow); }
+
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; } }
+    ::selection { background: var(--yellow); color: var(--ink); }
+  </style>
+</head>
+<body>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></symbol>
+    <symbol id="ic-doc" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-deck" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 20h6M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <!-- Menu bar -->
+  <div class="menubar">
+    <div class="menubar-inner">
+      <span class="apple">YouTube<b>Analyst</b></span>
+      <span class="menu"><span>File</span><span>Edit</span><span>Run</span><span>Help</span></span>
+      <span class="spacer"></span>
+      <span id="server-status" class="status-pill"><span class="pulse"></span><span>connecting</span></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Hero -->
+    <header class="hero">
+      <span class="burst b1" aria-hidden="true"></span>
+      <span class="burst b2" aria-hidden="true"></span>
+      <h1 class="bigword">ANALYZE</h1>
+      <div class="subword">·YOUR·VIDEOS·EXE·</div>
+      <p class="tagline">
+        <b>Single Video</b> drops a YouTube link into Groq and prints a receipt — summary, key moments &amp; quotes.
+        <b>Weekly Trends</b> reads channels &amp; keywords, then ships the report to Sheets, Slides &amp; your inbox.
+      </p>
+    </header>
+
+    <!-- Mode tabs -->
+    <div class="mode-tabs" role="tablist">
+      <button class="mode-tab active" data-mode-tab="single" type="button" role="tab" aria-selected="true">single_video</button>
+      <button class="mode-tab" data-mode-tab="batch" type="button" role="tab" aria-selected="false">weekly_trends</button>
+    </div>
+
+    <!-- SINGLE MODE -->
+    <section class="mode-active" data-mode="single">
+      <div class="win center">
+        <div class="win-bar"><span class="title">analyze.exe</span><span class="ctrls"><b>–</b><b>▢</b><b>✕</b></span></div>
+        <div class="win-body">
+          <form id="analyze-form">
+            <label class="field-label" for="url-input">Paste a YouTube link:</label>
+            <div class="url-row">
+              <input id="url-input" type="url" class="field url-input" placeholder="https://youtube.com/watch?v=..." autocomplete="off" spellcheck="false" />
+              <button id="run-btn-single" type="submit" class="btn primary">
+                <svg id="run-icon-single"><use href="#ic-play"></use></svg>
+                <span id="run-label-single">Run</span>
+              </button>
+              <button id="stop-btn-single" type="button" hidden class="btn small">Stop</button>
+            </div>
+            <div class="examples">
+              <span>shortcuts:</span>
+              <button type="button" class="example-link" data-url="https://www.youtube.com/watch?v=q8VePUwjB9Y">lex fridman</button>
+              <button type="button" class="example-link" data-url="https://www.youtube.com/watch?v=ZG7U6gT8tZk">andrej karpathy</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- BATCH MODE -->
+    <section data-mode="batch">
+      <div class="win center" style="max-width:860px;">
+        <div class="win-bar"><span class="title">weekly_report.exe</span><span class="ctrls"><b>–</b><b>▢</b><b>✕</b></span></div>
+        <div class="win-body">
+          <form id="run-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px 36px;">
+              <div>
+                <div class="label-strong">Sources</div>
+                <label class="field-label" for="channels">YouTube channels</label>
+                <input id="channels" type="text" class="field" placeholder="@mkbhd, @verge, UCxxx..." autocomplete="off" />
+                <p class="field-help">Comma-separated handles (@) or channel IDs (UC…).</p>
+                <label class="field-label" for="keywords" style="margin-top:16px;">Keywords</label>
+                <input id="keywords" type="text" class="field" placeholder="ai, productivity, robotics" autocomplete="off" />
+                <p class="field-help">Comma-separated search terms.</p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:22px;">
+                <div>
+                  <div class="label-strong">Window</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div><label class="field-label" for="lookback">Lookback (days)</label><input id="lookback" type="number" min="1" max="90" value="7" class="field" /></div>
+                    <div><label class="field-label" for="maxResults">Max / source</label><input id="maxResults" type="number" min="1" max="50" value="10" class="field" /></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="label-strong">Outputs</div>
+                  <label class="check-row"><input id="opt-sheets" type="checkbox" class="check" checked /><span>Write to Google Sheets</span></label>
+                  <label class="check-row"><input id="opt-slides" type="checkbox" class="check" checked /><span>Create or update Google Slides</span></label>
+                  <label class="check-row"><input id="opt-email" type="checkbox" class="check" checked /><span>Send email via Gmail</span></label>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-top:20px;padding-top:16px;border-top:2px solid var(--line);">
+              <p style="margin:0;font-family:var(--pixel);font-size:16px;color:var(--gray);">first run saves SPREADSHEET_ID &amp; PRESENTATION_ID to .env</p>
+              <div style="display:flex;gap:10px;">
+                <button id="stop-btn-batch" type="button" hidden class="btn small">Stop</button>
+                <button id="run-btn-batch" type="submit" class="btn primary">
+                  <svg id="run-icon-batch"><use href="#ic-play"></use></svg>
+                  <span id="run-label-batch">Run report</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Work: pipeline + terminal -->
+    <section class="work" id="work">
+      <div class="win">
+        <div class="win-bar"><span class="title">tasks</span><span class="ctrls"><b>–</b><b>▢</b><b>✕</b></span></div>
+        <div class="win-body">
+          <ol class="steps mode-active" data-mode="single" id="pipeline-single">
+            <li class="step" data-step="parse"><span class="step-num">1</span><span class="step-text">parse the url</span><span class="dot"></span></li>
+            <li class="step" data-step="meta"><span class="step-num">2</span><span class="step-text">fetch video metadata</span><span class="dot"></span></li>
+            <li class="step" data-step="transcript"><span class="step-num">3</span><span class="step-text">fetch transcript</span><span class="dot"></span></li>
+            <li class="step" data-step="summarize"><span class="step-num">4</span><span class="step-text">summarize via groq</span><span class="dot"></span></li>
+          </ol>
+          <ol class="steps" data-mode="batch" id="pipeline-batch">
+            <li class="step" data-step="fetch"><span class="step-num">1</span><span class="step-text">fetch videos</span><span class="dot"></span></li>
+            <li class="step" data-step="analyze"><span class="step-num">2</span><span class="step-text">analyze trends</span><span class="dot"></span></li>
+            <li class="step" data-step="sheets"><span class="step-num">3</span><span class="step-text">write to sheets</span><span class="dot"></span></li>
+            <li class="step" data-step="slides"><span class="step-num">4</span><span class="step-text">build slides</span><span class="dot"></span></li>
+            <li class="step" data-step="email"><span class="step-num">5</span><span class="step-text">send email</span><span class="dot"></span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="win term">
+        <div class="win-bar"><span class="title">analyst.log</span><button id="clear-log" class="console-clear">clear</button></div>
+        <div id="log" class="log-body"><div class="ll-meta">pick a mode, fill the inputs, and run.</div></div>
+        <div id="batch-strip" class="batch-strip" hidden>
+          <a id="link-sheet" class="link-sheet" target="_blank" rel="noopener" hidden><svg style="width:14px;height:14px"><use href="#ic-doc"></use></svg> open google sheet</a>
+          <a id="link-slides" class="link-slides" target="_blank" rel="noopener" hidden><svg style="width:14px;height:14px"><use href="#ic-deck"></use></svg> open slides deck</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- OUTPUT: receipt collage -->
+    <section id="result" hidden>
+      <div class="collage">
+        <div>
+          <div class="cd-case"><img id="r-thumb" src="" alt="" /></div>
+          <h2 id="r-title" class="film-title"></h2>
+          <div class="film-meta">
+            by <b id="r-channel"></b> &middot; <span id="r-duration"></span> &middot; <b id="r-views"></b> views
+            &middot; <a id="r-link" href="#" target="_blank" rel="noopener">watch ↗</a>
+          </div>
+          <div id="r-tags" class="tags"></div>
+          <p id="r-summary" class="summary"></p>
+          <div class="topblock">
+            <div class="script-title">Top Takeaways</div>
+            <ul id="r-takeaways" class="takeaway-list"></ul>
+          </div>
+        </div>
+        <div class="receipt">
+          <div class="tape" aria-hidden="true"></div>
+          <div class="rcpt-title">ANALYSTIFY</div>
+          <div class="rcpt-sub">YOUTUBE VIDEO RECEIPT</div>
+          <hr class="rcpt-rule" />
+          <div class="rcpt-line"><span class="k">CHANNEL</span><span id="r-channel-r"></span></div>
+          <div class="rcpt-sec">KEY MOMENTS</div>
+          <ul id="r-moments" class="moment-list"></ul>
+          <hr class="rcpt-rule" />
+          <div class="rcpt-sec">HIGHLIGHTS</div>
+          <ul id="r-highlights" class="quote-list"></ul>
+          <hr class="rcpt-rule" />
+          <div class="rcpt-line"><span class="k">RUNTIME</span><span id="r-duration-r"></span></div>
+          <div class="rcpt-line"><span class="k">VIEWS</span><span id="r-views-r"></span></div>
+          <div class="rcpt-sub" style="margin-top:14px;">THANK YOU FOR WATCHING</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span class="hand">youtube analyst</span><br/>
+      python · youtube-transcript-api · groq · sheets · slides · gmail
+    </footer>
+
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const logEl = $("log");
+    const allSteps = () => document.querySelectorAll('.step');
+    const serverStatus = $("server-status");
+    const resultEl = $("result");
+    const batchStrip = $("batch-strip");
+    const sheetLink = $("link-sheet");
+    const slidesLink = $("link-slides");
+
+    let currentMode = "single";
+    let currentSource = null;
+    let pendingResult = null;
+
+    function switchMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll("[data-mode-tab]").forEach((b) => {
+        const on = b.dataset.modeTab === mode;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.querySelectorAll("[data-mode]").forEach((el) => {
+        el.classList.toggle("mode-active", el.dataset.mode === mode);
+      });
+      logEl.innerHTML = `<div class="ll-meta">${mode === "single"
+        ? "paste a youtube url above and press run."
+        : "fill in channels and keywords, then run the report."}</div>`;
+      resetSteps();
+      resultEl.hidden = true;
+      batchStrip.hidden = true;
+      sheetLink.hidden = true;
+      slidesLink.hidden = true;
+    }
+
+    document.querySelectorAll("[data-mode-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (currentSource) return;
+        switchMode(btn.dataset.modeTab);
+      });
+    });
+
+    function appendLog(text, cls = "") {
+      const div = document.createElement("div");
+      div.className = `log-line ${cls}`;
+      div.textContent = text;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStep(stepName, state) {
+      allSteps().forEach((el) => {
+        if (el.dataset.step === stepName) {
+          el.classList.remove("active", "done", "error");
+          if (state) el.classList.add(state);
+        }
+      });
+    }
+    function resetSteps() { allSteps().forEach((el) => el.classList.remove("active", "done", "error")); }
+
+    function setRunning(on) {
+      const rs = $("run-btn-single"), ic = $("run-icon-single"), lb = $("run-label-single"), sb = $("stop-btn-single");
+      if (rs) {
+        rs.disabled = on; sb.hidden = !on;
+        if (ic) ic.style.display = on ? "none" : "inline-block";
+        if (lb) lb.textContent = on ? "Running…" : "Run";
+      }
+      const rb = $("run-btn-batch"), ib = $("run-icon-batch"), lbb = $("run-label-batch"), sbb = $("stop-btn-batch");
+      if (rb) {
+        rb.disabled = on; sbb.hidden = !on;
+        if (ib) ib.style.display = on ? "none" : "inline-block";
+        if (lbb) lbb.textContent = on ? "Running…" : "Run report";
+      }
+    }
+
+    function classifyLine(line) {
+      if (/ERROR|FATAL/.test(line))           return "ll-err";
+      if (/WARN/.test(line))                  return "ll-warn";
+      if (line.startsWith("[pipeline]"))      return "ll-pipe";
+      if (line.startsWith("[parse]"))         return "ll-parse";
+      if (line.startsWith("[meta]"))          return "ll-parse";
+      if (line.startsWith("[transcript]"))    return "ll-trans";
+      if (line.startsWith("[summarize]"))     return "ll-sum";
+      if (line.startsWith("[fetch]"))         return "ll-fetch";
+      if (line.startsWith("[analyze]"))       return "ll-ana";
+      if (line.startsWith("[sheets]"))        return "ll-sheet";
+      if (line.startsWith("[slides]"))        return "ll-slide";
+      if (line.startsWith("[gmail]"))         return "ll-gmail";
+      if (line.startsWith("[serve]"))         return "ll-meta";
+      return "";
+    }
+
+    function trackStepsSingle(line) {
+      if (line.includes("step 1/4")) setStep("parse", "active");
+      else if (line.includes("step 2/4")) { setStep("parse", "done"); setStep("meta", "active"); }
+      else if (line.includes("step 3/4")) { setStep("meta", "done"); setStep("transcript", "active"); }
+      else if (line.includes("step 4/4")) { setStep("transcript", "done"); setStep("summarize", "active"); }
+      else if (line.includes("[pipeline] DONE")) setStep("summarize", "done");
+    }
+    function trackStepsBatch(line) {
+      if (line.includes("step 1/5")) setStep("fetch", "active");
+      else if (line.includes("step 2/5")) { setStep("fetch", "done"); setStep("analyze", "active"); }
+      else if (line.includes("step 3/5")) { setStep("analyze", "done"); setStep("sheets", "active"); }
+      else if (line.includes("step 4/5")) { setStep("sheets", "done"); setStep("slides", "active"); }
+      else if (line.includes("step 5/5")) { setStep("slides", "done"); setStep("email", "active"); }
+      else if (line.includes("[pipeline] DONE")) setStep("email", "done");
+    }
+
+    function captureBatchLinks(line) {
+      const sheetMatch = line.match(/https:\/\/docs\.google\.com\/spreadsheets\/[^\s]+/);
+      if (sheetMatch) { sheetLink.href = sheetMatch[0]; sheetLink.hidden = false; batchStrip.hidden = false; }
+      const slidesMatch = line.match(/https:\/\/docs\.google\.com\/presentation\/[^\s]+/);
+      if (slidesMatch) { slidesLink.href = slidesMatch[0]; slidesLink.hidden = false; batchStrip.hidden = false; }
+    }
+
+    function tryCaptureResult(line) {
+      if (!line.startsWith("RESULT: ")) return false;
+      try { pendingResult = JSON.parse(line.slice(8)); return true; }
+      catch (e) { appendLog(`[serve] bad RESULT json: ${e.message}`, "ll-err"); return false; }
+    }
+
+    function escape(s) { return String(s || "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+    function fmtCount(n) { return n == null ? "0" : Number(n).toLocaleString(); }
+
+    function renderResult(data) {
+      const v = data.video || {};
+      $("r-thumb").src = v.thumbnail || "";
+      $("r-thumb").alt = v.title || "";
+      $("r-title").textContent = v.title || "(no title)";
+      $("r-channel").textContent = v.channel || "";
+      $("r-duration").textContent = v.duration_label || "";
+      $("r-views").textContent = fmtCount(v.views);
+      $("r-link").href = v.url || "#";
+      const cr = $("r-channel-r"), dr = $("r-duration-r"), vr = $("r-views-r");
+      if (cr) cr.textContent = v.channel || "";
+      if (dr) dr.textContent = v.duration_label || "";
+      if (vr) vr.textContent = fmtCount(v.views);
+
+      const tagsEl = $("r-tags"); tagsEl.innerHTML = "";
+      (data.topic_tags || []).forEach((t) => { const s = document.createElement("span"); s.className = "tag"; s.textContent = t; tagsEl.appendChild(s); });
+
+      $("r-summary").textContent = data.summary || "(no summary)";
+      if (data.transcript_available === false) {
+        const note = document.createElement("div");
+        note.style.cssText = "margin-top:12px;font-size:12.5px;color:var(--gray);font-style:italic;";
+        note.textContent = "Note: no captions available; summary is from metadata only.";
+        $("r-summary").after(note);
+      }
+
+      const mEl = $("r-moments"); mEl.innerHTML = "";
+      (data.key_moments || []).forEach((km) => {
+        const a = document.createElement("a");
+        a.className = "moment";
+        a.href = `${v.url}&t=${km.seconds}s`;
+        a.target = "_blank"; a.rel = "noopener";
+        a.innerHTML = `<span class="ts">${escape(km.timestamp)}</span><span class="label">${escape(km.label)}</span>`;
+        mEl.appendChild(a);
+      });
+
+      const hEl = $("r-highlights"); hEl.innerHTML = "";
+      (data.highlights || []).forEach((q) => { const li = document.createElement("li"); li.className = "quote"; li.textContent = q; hEl.appendChild(li); });
+
+      const tEl = $("r-takeaways"); tEl.innerHTML = "";
+      (data.takeaways || []).forEach((t) => { const li = document.createElement("li"); li.className = "takeaway"; const sp = document.createElement("span"); sp.textContent = t; li.appendChild(sp); tEl.appendChild(li); });
+
+      resultEl.hidden = false;
+      resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function startRun(endpoint, params, options) {
+      logEl.innerHTML = "";
+      resetSteps();
+      resultEl.hidden = true;
+      batchStrip.hidden = true;
+      sheetLink.hidden = true;
+      slidesLink.hidden = true;
+      pendingResult = null;
+      setRunning(true);
+      appendLog(options.startLine, "ll-meta");
+
+      const es = new EventSource(`${endpoint}?${params.toString()}`);
+      currentSource = es;
+
+      es.addEventListener("log", (ev) => {
+        const line = ev.data;
+        if (currentMode === "single" && tryCaptureResult(line)) return;
+        appendLog(line, classifyLine(line));
+        if (currentMode === "single") trackStepsSingle(line);
+        else { trackStepsBatch(line); captureBatchLinks(line); }
+      });
+      es.addEventListener("done", (ev) => {
+        const { code } = JSON.parse(ev.data || "{}");
+        appendLog(`— process exited (${code}) —`, code === 0 ? "ll-sum" : "ll-err");
+        es.close();
+        currentSource = null;
+        setRunning(false);
+        if (code === 0 && currentMode === "single" && pendingResult) renderResult(pendingResult);
+      });
+      es.onerror = () => {
+        appendLog("connection closed", "ll-meta");
+        es.close();
+        currentSource = null;
+        setRunning(false);
+      };
+    }
+
+    $("analyze-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (currentSource) return;
+      const u = $("url-input").value.trim();
+      if (!u) return;
+      startRun("/analyze", new URLSearchParams({ url: u }), { startLine: `$ analyze ${u}  (${new Date().toLocaleTimeString()})` });
+    });
+
+    $("run-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (currentSource) return;
+      const params = new URLSearchParams({
+        channels: $("channels").value.trim(),
+        keywords: $("keywords").value.trim(),
+        lookback: $("lookback").value,
+        maxResults: $("maxResults").value,
+        sheets: $("opt-sheets").checked ? "1" : "0",
+        slides: $("opt-slides").checked ? "1" : "0",
+        email:  $("opt-email").checked  ? "1" : "0",
+      });
+      startRun("/run", params, { startLine: `$ python tools/run_weekly_report.py  (${new Date().toLocaleTimeString()})` });
+    });
+
+    const stopHandler = async () => {
+      if (currentSource) currentSource.close();
+      try { await fetch("/stop", { method: "POST" }); } catch (_) {}
+      currentSource = null;
+      setRunning(false);
+      appendLog("stopped", "ll-warn");
+    };
+    $("stop-btn-single").addEventListener("click", stopHandler);
+    $("stop-btn-batch").addEventListener("click", stopHandler);
+
+    $("clear-log").addEventListener("click", () => {
+      logEl.innerHTML = "";
+      resetSteps();
+      resultEl.hidden = true;
+      batchStrip.hidden = true;
+      sheetLink.hidden = true;
+      slidesLink.hidden = true;
+    });
+
+    document.querySelectorAll(".example-link").forEach((el) => {
+      el.addEventListener("click", () => { $("url-input").value = el.dataset.url; $("url-input").focus(); });
+    });
+
+    async function pingServer() {
+      try {
+        const r = await fetch("/health");
+        if (r.ok) { serverStatus.className = "status-pill ready"; serverStatus.innerHTML = '<span class="pulse"></span><span>ready</span>'; }
+        else throw new Error("bad");
+      } catch (_) {
+        serverStatus.className = "status-pill offline"; serverStatus.innerHTML = '<span class="pulse"></span><span>offline</span>';
+      }
+    }
+    pingServer();
+  </script>
+</body>
+</html>

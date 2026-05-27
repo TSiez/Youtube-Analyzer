@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: youtube-analyst
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Single-video analysis needs only these two — set them in the Render dashboard.
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      # Optional: weekly-trends (Google) settings. Note that the OAuth step is
+      # interactive and won't complete on a headless server without a pre-made
+      # token.json — single-video mode works without any of these.
+      - key: SENDER_EMAIL
+        sync: false
+      - key: RECIPIENT_EMAIL
+        sync: false
+      - key: SPREADSHEET_ID
+        sync: false
+      - key: PRESENTATION_ID
+        sync: false

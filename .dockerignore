@@ -1,0 +1,15 @@
+.git
+node_modules
+.venv
+venv
+__pycache__/
+*.pyc
+*.pyo
+# secrets — never bake into the image (provide via Render env vars / secret files)
+.env
+credentials.json
+token.json
+# design references — not needed at runtime
+*.jpg
+*.jpeg
+*.png
