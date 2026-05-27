@@ -73,6 +73,14 @@ function spawnAndStream(res, args, req, label) {
 
   currentProcess = child;
 
+  // Heartbeat: a slow pipeline step (e.g. creating a spreadsheet) can leave the
+  // SSE stream idle long enough for a cloud proxy to drop it ("connection
+  // closed"). A periodic comment keeps the connection alive without affecting
+  // the EventSource data.
+  const heartbeat = setInterval(() => {
+    try { res.write(`: keepalive ${Date.now()}\n\n`); } catch (_) {}
+  }, 15000);
+
   const emitLines = (buf) => {
     const lines = buf.toString("utf-8").split(/\r?\n/);
     for (const line of lines) {
@@ -88,12 +96,14 @@ function spawnAndStream(res, args, req, label) {
     sseSend(res, "log", `[serve] process error: ${err.message}`);
   });
   child.on("close", (code) => {
+    clearInterval(heartbeat);
     sseSend(res, "done", { code });
     res.end();
     if (currentProcess === child) currentProcess = null;
   });
 
   req.on("close", () => {
+    clearInterval(heartbeat);
     if (currentProcess === child) {
       try { child.kill("SIGTERM"); } catch (_) {}
     }
