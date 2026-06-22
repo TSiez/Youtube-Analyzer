@@ -4,255 +4,304 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="color-scheme" content="light" />
-  <title>YouTube Analyst — analyze.exe</title>
+  <title>YouTube Analyst</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=VT323&family=Sacramento&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet"
   />
 
   <style>
     *,*::before,*::after { box-sizing: border-box; }
-    /* The `hidden` attribute must win over the display rules below, or the
-       result panel / stop buttons / sheet+slides links show before they have
-       an href and look broken (un-clickable). */
+    /* The `hidden` attribute must win over the display rules below — otherwise
+       the result panel / stop buttons / sheet+slides links would show before
+       they have an href and look broken. */
     [hidden] { display: none !important; }
 
     :root {
-      --blue:     #2e2be6;
-      --blue-deep:#1d1ab5;
-      --beige:    #e8e3d3;
-      --beige-2:  #d7d1bd;
-      --window:   #f5f2ea;
-      --ink:      #161616;
-      --red:      #e02a20;
-      --yellow:   #f3c016;
-      --pink:     #ff45ad;
-      --gray:     #a39d8a;
-      --line:     #c5bfab;
-      --term-bg:  #0d0e1c;
-      --term-fg:  #9bf0a0;
+      --blue:        #0153B3;
+      --blue-deep:   #013C82;
+      --blue-deepest:#012A5C;
+      --tint:        #E9F1FB;
+      --tint-2:      #C9DCF2;
+      --steel:       #4A6B96;
+      --yellow:      #FECF02;
+      --yellow-deep: #E7BC00;
+      --white:       #ffffff;
+      --ink:         #012A5C;
+      --ink-soft:    #1a3a6c;
+      --muted:       #6a85a8;
+      --line:        #d3def0;
 
-      --display: 'Anton', 'Arial Narrow', sans-serif;
-      --pixel:   'VT323', ui-monospace, monospace;
-      --body:    'Archivo', system-ui, sans-serif;
-      --script:  'Sacramento',
+      --display: 'Pacifico', cursive;
+      --body:    'Poppins', system-ui, sans-serif;
+      --mono:    'JetBrains Mono', ui-monospace, monospace;
     }
 
     html { background: var(--blue); }
     body {
       margin: 0; padding: 0;
-      color: var(--ink);
+      color: var(--white);
       font-family: var(--body);
-      font-size: 16px; line-height: 1.5;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 1.5;
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
       background:
-        repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 3px),
-        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.10), transparent 40%),
-        radial-gradient(circle at 84% 76%, rgba(255,72,173,0.18), transparent 42%),
+        radial-gradient(ellipse 50% 35% at 12% 8%, rgba(254,207,2,0.12), transparent 60%),
+        radial-gradient(ellipse 60% 40% at 88% 100%, rgba(255,255,255,0.10), transparent 60%),
         var(--blue);
-      background-attachment: fixed;
     }
-    .pixel { font-family: var(--pixel); }
-    a { color: var(--ink); }
+    .mono { font-family: var(--mono); }
+    a { color: var(--yellow); text-decoration: none; }
 
-    /* ── Window component (OS dialog) ── */
-    .win { background: var(--window); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); position: relative; }
-    .win-bar { display: flex; align-items: center; gap: 8px; background: var(--beige-2); border-bottom: 2px solid var(--ink);
-      padding: 5px 8px; font-family: var(--pixel); font-size: 17px; line-height: 1; color: var(--ink);
-      background-image: repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,0.05) 6px 7px); }
-    .win-bar .title { font-family: var(--pixel); font-size: 17px; letter-spacing: 0.02em; text-transform: lowercase; }
-    .win-bar .ctrls { margin-left: auto; display: flex; gap: 5px; }
-    .win-bar .ctrls b { width: 16px; height: 14px; border: 1.5px solid var(--ink); background: var(--window); display: inline-flex;
-      align-items: center; justify-content: center; font-family: var(--pixel); font-size: 12px; line-height: 1; }
-    .win-body { padding: 18px 18px 20px; }
+    /* ── Top bar ── */
+    .top {
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(1,42,92,0.72);
+      backdrop-filter: blur(14px) saturate(140%);
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    .top-inner { max-width: 1180px; margin: 0 auto; padding: 0 26px; height: 64px;
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .brand { display: inline-flex; align-items: baseline; gap: 8px; font-family: var(--display); font-size: 28px; line-height: 1; color: var(--yellow); }
+    .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--yellow); }
+    .crumb { font-family: var(--body); font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.78); letter-spacing: 0.04em; text-transform: uppercase; padding-left: 16px; border-left: 1px solid rgba(255,255,255,0.20); }
+    .spacer { flex: 1; }
+    .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+      font-family: var(--body); font-weight: 500; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.78); }
+    .status-pill .pulse { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.45); }
+    .status-pill.ready { border-color: var(--yellow); background: rgba(254,207,2,0.16); color: var(--yellow); }
+    .status-pill.ready .pulse { background: var(--yellow); animation: pulse 2.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(254,207,2,0.6); } 50% { box-shadow: 0 0 0 7px rgba(254,207,2,0); } }
+    .status-pill.offline { border-color: #ff8a8a; background: rgba(255,138,138,0.16); color: #ffd1d1; }
+    .status-pill.offline .pulse { background: #ff8a8a; }
 
-    /* ── Menu bar ── */
-    .menubar { position: sticky; top: 0; z-index: 30; background: var(--beige); border-bottom: 2px solid var(--ink);
-      box-shadow: 0 3px 0 rgba(0,0,0,0.25); }
-    .menubar-inner { max-width: 1120px; margin: 0 auto; padding: 0 18px; height: 38px; display: flex; align-items: center; gap: 18px; }
-    .menubar .apple { font-family: var(--display); font-size: 18px; color: var(--ink); letter-spacing: 0.02em; }
-    .menubar .apple b { color: var(--red); }
-    .menubar .menu { font-family: var(--pixel); font-size: 18px; color: var(--ink); display: flex; gap: 16px; }
-    .menubar .menu span { cursor: default; }
-    .menubar .spacer { flex: 1; }
-    .status-pill { display: inline-flex; align-items: center; gap: 7px; font-family: var(--pixel); font-size: 16px; color: var(--ink);
-      border: 1.5px solid var(--ink); background: var(--window); padding: 2px 9px; }
-    .status-pill .pulse { width: 9px; height: 9px; border: 1.5px solid var(--ink); background: var(--gray); }
-    .status-pill.ready .pulse { background: #2fb84a; animation: blink 1.4s steps(2,end) infinite; }
-    .status-pill.offline .pulse { background: var(--red); }
-    @keyframes blink { 50% { opacity: 0.35; } }
-
-    .wrap { max-width: 1120px; margin: 0 auto; padding: 30px 18px 70px; position: relative; z-index: 1; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 50px 26px 80px; }
 
     /* ── Hero ── */
-    .hero { position: relative; text-align: center; padding: 18px 0 8px; }
-    .bigword { font-family: var(--display); font-size: clamp(76px, 18vw, 200px); line-height: 0.82; letter-spacing: 0.01em;
-      color: var(--window); margin: 0; text-shadow: 6px 6px 0 var(--ink), 12px 12px 0 var(--red); }
-    .subword { font-family: var(--display); font-size: clamp(20px, 4vw, 34px); color: var(--yellow); -webkit-text-stroke: 1.5px var(--ink);
-      text-shadow: 3px 3px 0 var(--ink); margin: 6px 0 0; letter-spacing: 0.04em; }
-    .tagline { max-width: 600px; margin: 18px auto 0; font-size: 14.5px; color: var(--window); line-height: 1.6; }
-    .tagline b { color: var(--yellow); }
+    .hero { text-align: center; margin-bottom: 36px; }
+    .hero .eyebrow { font-family: var(--body); font-weight: 500; font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--yellow); }
+    .hero h1 { margin: 14px 0 0; line-height: 0.94; }
+    .hero h1 .top-line { display: block; font-family: var(--body); font-weight: 800; font-size: clamp(38px, 6.6vw, 78px); letter-spacing: -0.02em; color: var(--white); text-transform: uppercase; }
+    .hero h1 .script { display: block; font-family: var(--display); font-weight: 400; font-size: clamp(62px, 11vw, 130px); color: var(--yellow); letter-spacing: 0; margin-top: -8px; }
+    .hero p.lead { max-width: 620px; margin: 22px auto 0; font-size: 15.5px; color: rgba(255,255,255,0.86); line-height: 1.6; }
+    .hero p.lead b { color: var(--yellow); font-weight: 600; }
 
-    /* decorative stickers */
-    .burst { position: absolute; width: 64px; height: 64px; background: var(--pink); z-index: 0; pointer-events: none;
-      clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); }
-    .burst.b1 { top: 6px; left: 4%; transform: rotate(-8deg); background: var(--yellow); }
-    .burst.b2 { top: 40px; right: 6%; transform: rotate(12deg); }
-    @media (max-width: 720px) { .burst { display: none; } }
+    /* ── Mode pills ── */
+    .mode-tabs { display: flex; justify-content: center; gap: 10px; margin: 32px 0 28px; }
+    .mode-tab {
+      font-family: var(--body); font-weight: 600; font-size: 13px;
+      cursor: pointer; border: 2px solid var(--white);
+      background: transparent; color: var(--white);
+      border-radius: 999px; padding: 10px 22px;
+      transition: all 0.16s;
+    }
+    .mode-tab:hover { background: rgba(255,255,255,0.10); }
+    .mode-tab.active { background: var(--yellow); color: var(--ink); border-color: var(--yellow); box-shadow: 0 8px 22px -10px rgba(254,207,2,0.6); }
 
-    /* ── Mode tabs (segmented) ── */
-    .mode-tabs { display: flex; justify-content: center; gap: 0; margin: 28px 0 22px; }
-    .mode-tab { font-family: var(--pixel); font-size: 19px; letter-spacing: 0.03em; cursor: pointer;
-      background: var(--beige); color: var(--ink); border: 2px solid var(--ink); padding: 8px 22px; box-shadow: 4px 4px 0 var(--ink); }
-    .mode-tab + .mode-tab { border-left: 0; }
-    .mode-tab.active { background: var(--red); color: var(--window); }
-
-    /* ── Mode show/hide ── */
     [data-mode] { display: none; }
     [data-mode].mode-active { display: block; }
     ol[data-mode].mode-active { display: block; }
 
-    .win.center { max-width: 720px; margin: 0 auto; }
+    /* ── Cards ── */
+    .card { background: var(--white); color: var(--ink); border-radius: 22px;
+      box-shadow: 0 18px 40px -22px rgba(1,42,92,0.55), 0 2px 0 rgba(1,42,92,0.05); }
+    .card-pad { padding: clamp(20px,3vw,32px); }
 
-    /* System text field */
+    .field-label { display: block; font-family: var(--body); font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--blue-deep); margin-bottom: 8px; }
     .field {
-      width: 100%; padding: 11px 14px; border: 2px solid var(--ink); background: #fff;
-      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.12);
-      font-family: var(--pixel); font-size: 19px; color: var(--ink);
+      width: 100%; padding: 13px 16px;
+      border: 2px solid var(--line); border-radius: 12px;
+      background: var(--tint); color: var(--ink);
+      font-family: var(--body); font-size: 14.5px; font-weight: 500;
+      transition: all 0.16s;
     }
-    .field:focus { outline: none; background: #fffef4; }
-    .field::placeholder { color: var(--gray); }
-    .field-label { display: block; font-family: var(--pixel); font-size: 17px; color: var(--ink); margin-bottom: 5px; }
-    .field-help { font-family: var(--body); font-size: 11.5px; color: var(--gray); margin-top: 5px; }
-    .label-strong { font-family: var(--display); font-size: 15px; letter-spacing: 0.04em; color: var(--red); text-transform: uppercase; margin-bottom: 12px; }
+    .field:focus { outline: none; border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 4px rgba(1,83,179,0.14); }
+    .field::placeholder { color: var(--muted); }
+    .field-help { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .label-section { font-family: var(--display); font-size: 26px; line-height: 1; color: var(--blue); margin-bottom: 16px; }
 
     /* URL row */
-    .url-row { display: flex; gap: 12px; align-items: stretch; }
-    .url-input { flex: 1; }
-
-    /* Retro buttons */
-    .btn {
-      font-family: var(--display); font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
-      border: 2px solid var(--ink); background: var(--beige); color: var(--ink); padding: 10px 22px;
-      box-shadow: 4px 4px 0 var(--ink); transition: transform 0.08s, box-shadow 0.08s; display: inline-flex; align-items: center; gap: 9px;
+    .url-row { display: flex; gap: 12px; align-items: stretch; max-width: 760px; margin: 0 auto; }
+    .pill-input {
+      flex: 1; display: flex; align-items: center; gap: 12px;
+      background: var(--white); border: 2px solid var(--white); border-radius: 999px;
+      padding: 8px 8px 8px 22px;
+      box-shadow: 0 16px 36px -18px rgba(1,42,92,0.55);
     }
-    .btn:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink); }
-    .btn:active:not(:disabled) { transform: translate(4px,4px); box-shadow: 0 0 0 var(--ink); }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .btn.primary { background: var(--red); color: var(--window); }
-    .btn svg { width: 13px; height: 13px; }
-    .btn.small { font-size: 13px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--ink); }
+    .pill-input svg.mag { width: 18px; height: 18px; color: var(--blue); flex-shrink: 0; }
+    .url-input { flex: 1; border: 0; background: transparent; outline: none;
+      font-family: var(--body); font-size: 15px; font-weight: 500; color: var(--ink); }
+    .url-input::placeholder { color: var(--muted); }
 
-    .examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; font-family: var(--pixel); font-size: 17px; color: var(--gray); }
-    .example-link { font-family: var(--pixel); font-size: 16px; cursor: pointer; background: var(--window); border: 1.5px solid var(--ink); color: var(--ink); padding: 3px 10px; box-shadow: 2px 2px 0 var(--ink); }
-    .example-link:hover { background: var(--yellow); }
+    /* ── Buttons ── */
+    .btn-yellow {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: var(--yellow); color: var(--ink);
+      font-family: var(--body); font-weight: 700; font-size: 13px;
+      letter-spacing: 0.04em;
+      border: 0; border-radius: 999px; cursor: pointer;
+      padding: 12px 24px;
+      box-shadow: 0 12px 24px -10px rgba(254,207,2,0.55), inset 0 1px 0 rgba(255,255,255,0.4);
+      transition: all 0.16s;
+    }
+    .btn-yellow:hover:not(:disabled) { background: var(--yellow-deep); transform: translateY(-1px); }
+    .btn-yellow:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-yellow svg { width: 12px; height: 12px; }
+    .btn-yellow.wide { padding: 13px 28px; font-size: 14px; }
 
-    .check { appearance: none; width: 20px; height: 20px; border: 2px solid var(--ink); background: #fff; cursor: pointer; position: relative; flex-shrink: 0; box-shadow: inset 2px 2px 0 rgba(0,0,0,0.1); }
-    .check:checked { background: var(--red); }
-    .check:checked::after { content: "✕"; position: absolute; inset: 0; color: var(--window); font-family: var(--pixel); font-size: 16px; line-height: 18px; text-align: center; }
-    .check-row { display: flex; align-items: center; gap: 11px; font-family: var(--pixel); font-size: 19px; color: var(--ink); cursor: pointer; padding: 4px 0; }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--white);
+      font-family: var(--body); font-weight: 600; font-size: 12px; letter-spacing: 0.06em;
+      border: 2px solid rgba(255,255,255,0.45);
+      border-radius: 999px; cursor: pointer; padding: 10px 18px;
+      transition: all 0.16s;
+    }
+    .btn-ghost:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+    .btn-ghost.dark { color: var(--blue); border-color: var(--blue); }
+    .btn-ghost.dark:hover { background: rgba(1,83,179,0.08); }
+
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 18px; font-size: 12.5px; color: rgba(255,255,255,0.7); }
+    .example-link { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: var(--white); cursor: pointer;
+      font-family: var(--body); font-weight: 500; font-size: 12px; padding: 5px 12px; border-radius: 999px; transition: all 0.16s; }
+    .example-link:hover { background: var(--yellow); color: var(--ink); border-color: var(--yellow); }
+
+    /* Checkbox */
+    .check { appearance: none; width: 19px; height: 19px; border-radius: 6px; border: 2px solid var(--line);
+      background: var(--white); cursor: pointer; position: relative; flex-shrink: 0; transition: all 0.14s; }
+    .check:checked { background: var(--yellow); border-color: var(--yellow-deep); }
+    .check:checked::after { content: ""; position: absolute; left: 5.5px; top: 2px; width: 5px; height: 10px; border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(45deg); }
+    .check-row { display: flex; align-items: center; gap: 11px; color: var(--ink); font-size: 14px; font-weight: 500; cursor: pointer; padding: 5px 0; }
 
     /* ── Work area ── */
-    .work { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,3fr); gap: 22px; margin-top: 30px; align-items: start; }
+    .work { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,3fr); gap: 22px; margin-top: 36px; align-items: start; }
+    .panel-title { font-family: var(--display); font-size: 32px; color: var(--yellow); margin: 0 0 14px; line-height: 1; }
 
-    /* pipeline steps */
+    /* pipeline track cards */
     .steps { list-style: none; padding: 0; margin: 0; }
-    .step { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 12px;
-      border: 2px solid var(--ink); background: var(--window); padding: 10px 12px; margin-bottom: 10px; box-shadow: 3px 3px 0 var(--ink); }
-    .step .step-num { width: 24px; height: 24px; border: 2px solid var(--ink); background: var(--beige); display: flex; align-items: center;
-      justify-content: center; font-family: var(--pixel); font-size: 15px; }
-    .step .step-text { font-family: var(--pixel); font-size: 18px; color: var(--ink); }
-    .step .dot { width: 16px; height: 16px; border: 2px solid var(--ink); background: var(--window); }
+    .step { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 14px;
+      background: var(--tint); border-radius: 16px; padding: 12px 16px; margin-bottom: 10px;
+      box-shadow: 0 6px 18px -12px rgba(1,42,92,0.4); transition: all 0.2s; color: var(--ink); }
+    .step .step-num { width: 30px; height: 30px; border-radius: 10px; background: var(--white);
+      display: flex; align-items: center; justify-content: center; font-family: var(--body); font-weight: 700; font-size: 13px; color: var(--blue); }
+    .step .step-text { font-family: var(--body); font-weight: 500; font-size: 14px; }
+    .step .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(1,42,92,0.18); }
     .step.active { background: var(--yellow); }
-    .step.active .dot { background: var(--yellow); animation: blink 0.9s steps(2,end) infinite; }
-    .step.active .dot::after { content: "▸"; font-family: var(--pixel); font-size: 13px; line-height: 12px; display: block; text-align: center; }
-    .step.done { background: #d8f0d2; }
-    .step.done .dot { background: #2fb84a; }
-    .step.done .dot::after { content: "✓"; color: var(--ink); font-family: var(--pixel); font-size: 13px; line-height: 12px; display: block; text-align: center; }
-    .step.error { background: #f7d6d3; }
-    .step.error .dot { background: var(--red); }
-    .step.error .dot::after { content: "✕"; color: var(--window); font-family: var(--pixel); font-size: 12px; line-height: 12px; display: block; text-align: center; }
+    .step.active .step-num { background: var(--ink); color: var(--yellow); }
+    .step.active .dot { background: var(--ink); animation: blink 1s steps(2,end) infinite; }
+    @keyframes blink { 50% { opacity: 0.35; } }
+    .step.done { background: var(--white); border: 2px solid var(--yellow); }
+    .step.done .step-num { background: var(--yellow); color: var(--ink); }
+    .step.done .dot { background: var(--blue); }
+    .step.done .dot::after { content: "✓"; color: var(--white); font-size: 9px; font-weight: 700; line-height: 12px; display: block; text-align: center; }
+    .step.error { background: #ffd9d9; }
+    .step.error .dot { background: #c4302b; }
 
-    /* terminal / log */
-    .term .win-bar { background: var(--ink); color: var(--term-fg); border-bottom-color: var(--ink); background-image: none; }
-    .term .win-bar .title { color: var(--term-fg); }
-    .term .win-bar .ctrls b { background: var(--ink); color: var(--term-fg); border-color: var(--term-fg); }
-    .log-body { background: var(--term-bg); font-family: var(--pixel); font-size: 17px; line-height: 1.4; padding: 14px 16px;
-      max-height: 340px; overflow-y: auto; color: var(--term-fg); }
-    .log-body::-webkit-scrollbar { width: 10px; } .log-body::-webkit-scrollbar-thumb { background: #2a2c44; }
-    .log-line { animation: linein 0.12s ease-out; }
-    @keyframes linein { from { opacity: 0; } to { opacity: 1; } }
-    .ll-err{color:#ff6b6b;} .ll-warn{color:var(--yellow);} .ll-pipe{color:#fff;} .ll-parse{color:#7fc7ff;}
-    .ll-trans{color:#c9a6ff;} .ll-sum{color:var(--term-fg);} .ll-fetch{color:#7fc7ff;} .ll-ana{color:#c9a6ff;}
-    .ll-sheet{color:#9bf0a0;} .ll-slide{color:var(--yellow);} .ll-gmail{color:#ff9ed1;} .ll-meta{color:#7d7f9c;}
-    .console-clear { margin-left: auto; cursor: pointer; background: var(--ink); border: 1.5px solid var(--term-fg); color: var(--term-fg);
-      font-family: var(--pixel); font-size: 13px; padding: 1px 8px; }
+    /* Console / log */
+    .console { background: var(--blue-deepest); border-radius: 18px; overflow: hidden;
+      box-shadow: 0 18px 40px -22px rgba(0,0,0,0.6); }
+    .console-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px;
+      background: rgba(0,0,0,0.22); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .console-bar .dots { display: flex; gap: 7px; }
+    .console-bar .dots span { width: 9px; height: 9px; border-radius: 50%; }
+    .console-bar .dots span:nth-child(1){background:#ff8a8a;}
+    .console-bar .dots span:nth-child(2){background:var(--yellow);}
+    .console-bar .dots span:nth-child(3){background:#9bf0a0;}
+    .console-bar .name { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.6); }
+    .console-clear { background: transparent; border: 0; cursor: pointer; font-family: var(--body); font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 999px; }
+    .console-clear:hover { color: var(--yellow); background: rgba(255,255,255,0.06); }
+    .log-body { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; padding: 16px 20px;
+      max-height: 360px; overflow-y: auto; color: rgba(255,255,255,0.9); }
+    .log-body::-webkit-scrollbar { width: 8px; }
+    .log-body::-webkit-scrollbar-thumb { background: rgba(254,207,2,0.3); border-radius: 4px; }
+    .log-line { animation: linein 0.16s ease-out; }
+    @keyframes linein { from { opacity:0; transform: translateX(-4px); } to { opacity:1; transform: translateX(0); } }
+    .ll-err{color:#ff9b9b;} .ll-warn{color:var(--yellow);} .ll-pipe{color:#fff;font-weight:600;}
+    .ll-parse{color:#9ec5ff;} .ll-trans{color:#c9b0ff;} .ll-sum{color:#a8e0a8;}
+    .ll-fetch{color:#9ec5ff;} .ll-ana{color:#c9b0ff;} .ll-sheet{color:#9bf0a0;}
+    .ll-slide{color:var(--yellow);} .ll-gmail{color:#ffb0d1;} .ll-meta{color:rgba(255,255,255,0.45);}
 
-    .batch-strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 16px; background: var(--ink); border-top: 2px solid var(--term-fg); }
-    .batch-strip a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-family: var(--pixel); font-size: 16px;
-      text-decoration: none; border: 1.5px solid var(--term-fg); }
-    .batch-strip .link-sheet { background: #1a1c33; color: var(--term-fg); }
-    .batch-strip .link-slides { background: var(--term-fg); color: var(--ink); }
+    .batch-strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 18px;
+      background: rgba(0,0,0,0.32); border-top: 1px solid rgba(255,255,255,0.08); }
+    .batch-strip a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+      font-family: var(--body); font-weight: 600; font-size: 12px; text-decoration: none; }
+    .batch-strip .link-sheet { background: rgba(255,255,255,0.10); color: var(--white); border: 1px solid rgba(255,255,255,0.22); }
+    .batch-strip .link-sheet:hover { background: rgba(255,255,255,0.18); }
+    .batch-strip .link-slides { background: var(--yellow); color: var(--ink); }
 
-    /* ── Output: receipt collage (output.jpg) on the desktop ── */
-    #result { margin-top: 36px; }
-    .collage { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 34px; align-items: start;
-      background: #f3e7ef; border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); padding: clamp(22px,4vw,40px);
+    /* ── Output: receipt + collage ── */
+    #result { margin-top: 44px; }
+    .collage {
+      display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 36px; align-items: start;
+      background: var(--white); border-radius: 26px;
+      box-shadow: 0 30px 60px -28px rgba(0,0,0,0.45);
+      padding: clamp(24px,4vw,44px);
       position: relative; overflow: hidden;
-      background-image: radial-gradient(circle at 88% 14%, rgba(255,69,173,0.18), transparent 34%),
-        radial-gradient(circle at 6% 84%, rgba(255,69,173,0.14), transparent 36%); }
+      background-image: radial-gradient(circle at 88% 12%, rgba(254,207,2,0.18), transparent 32%),
+                        radial-gradient(circle at 8% 86%, rgba(1,83,179,0.12), transparent 36%);
+      color: var(--ink);
+    }
     @keyframes rise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
-    #result:not([hidden]) .collage { animation: rise 0.5s ease-out backwards; }
+    #result:not([hidden]) .collage { animation: rise 0.55s cubic-bezier(0.16,1,0.3,1) backwards; }
 
-    .cd-case { width: 220px; max-width: 70%; aspect-ratio: 1; overflow: hidden; border: 2px solid var(--ink);
-      transform: rotate(-3deg); box-shadow: 6px 6px 0 var(--ink); background: var(--ink); }
+    .cd-case { width: 220px; max-width: 70%; aspect-ratio: 1; overflow: hidden;
+      border: 2px solid var(--ink); border-radius: 6px; transform: rotate(-3deg);
+      box-shadow: 8px 8px 0 var(--blue); background: var(--ink); }
     .cd-case img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .film-title { font-family: var(--display); font-size: 30px; line-height: 1.04; color: var(--ink); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.01em; }
-    .film-meta { font-family: var(--pixel); font-size: 17px; color: var(--ink); line-height: 1.5; }
-    .film-meta b { color: var(--red); } .film-meta a { color: var(--pink); text-decoration: none; border-bottom: 2px solid var(--pink); }
-    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
-    .tag { font-family: var(--pixel); font-size: 15px; padding: 2px 10px; background: var(--yellow); border: 1.5px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
-    .summary { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 16px 0 0; max-width: 52ch; }
+    .film-title { font-family: var(--body); font-weight: 800; font-size: 26px; line-height: 1.12;
+      color: var(--ink); margin: 22px 0 8px; letter-spacing: -0.01em; }
+    .film-meta { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); line-height: 1.7; }
+    .film-meta b { color: var(--blue); font-weight: 600; }
+    .film-meta a { color: var(--blue); text-decoration: none; border-bottom: 1.5px solid var(--yellow); }
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+    .tag { font-family: var(--body); font-weight: 600; font-size: 11px; padding: 4px 11px;
+      background: var(--yellow); color: var(--ink); border-radius: 999px; }
+    .summary { font-size: 14.5px; line-height: 1.62; color: var(--ink); margin: 18px 0 0; max-width: 52ch; }
 
-    .topblock { margin-top: 24px; }
-    .script-title { font-family: var(--script); font-size: 46px; line-height: 0.9; color: var(--pink); }
-    .takeaway-list { list-style: none; margin: 6px 0 0; padding: 0; counter-reset: tk; }
-    .takeaway { counter-increment: tk; display: grid; grid-template-columns: 28px 1fr; gap: 8px; padding: 5px 0; align-items: baseline; }
-    .takeaway::before { content: counter(tk) "."; font-family: var(--pixel); font-size: 18px; color: var(--ink); }
+    .topblock { margin-top: 28px; }
+    .script-title { font-family: var(--display); font-size: 48px; color: var(--blue); line-height: 0.95; }
+    .takeaway-list { list-style: none; margin: 8px 0 0; padding: 0; counter-reset: tk; }
+    .takeaway { counter-increment: tk; display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 6px 0; align-items: baseline; }
+    .takeaway::before { content: counter(tk) "."; font-family: var(--body); font-weight: 700; color: var(--blue); }
     .takeaway span { font-family: var(--body); font-size: 14px; line-height: 1.5; color: var(--ink); }
 
     /* receipt */
-    .receipt { background: #fff; border: 1px solid var(--line); padding: 28px 24px 24px; position: relative; transform: rotate(1.4deg);
-      box-shadow: 0 18px 36px -16px rgba(0,0,0,0.5); }
-    .tape { position: absolute; top: -13px; left: 50%; transform: translateX(-50%) rotate(-3deg); width: 130px; height: 28px;
-      background: rgba(255,69,173,0.5); border: 1px dashed rgba(220,40,150,0.6); }
-    .rcpt-title { font-family: var(--display); font-size: 26px; letter-spacing: 0.06em; text-align: center; color: var(--ink); }
-    .rcpt-sub { font-family: var(--pixel); font-size: 16px; text-align: center; color: var(--gray); letter-spacing: 0.1em; }
-    .rcpt-rule { border: 0; border-top: 1px dashed var(--gray); margin: 12px 0; }
-    .rcpt-line { display: flex; justify-content: space-between; gap: 12px; font-family: var(--pixel); font-size: 17px; color: var(--ink); padding: 1px 0; }
-    .rcpt-line .k { color: var(--gray); }
-    .rcpt-sec { font-family: var(--pixel); font-size: 17px; color: var(--ink); margin: 6px 0; letter-spacing: 0.06em; }
+    .receipt { background: #fdfaf0; border: 1px solid #e5dcc4; padding: 28px 26px 26px;
+      position: relative; transform: rotate(1.4deg); box-shadow: 0 18px 36px -16px rgba(0,0,0,0.4); }
+    .tape { position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+      width: 130px; height: 28px; background: rgba(254,207,2,0.6); border: 1px dashed rgba(231,188,0,0.7); }
+    .rcpt-title { font-family: var(--body); font-weight: 800; font-size: 22px; letter-spacing: 0.1em; text-align: center; color: var(--ink); }
+    .rcpt-sub { font-family: var(--mono); font-size: 11px; text-align: center; color: var(--ink-soft); letter-spacing: 0.16em; margin-top: 2px; }
+    .rcpt-rule { border: 0; border-top: 1px dashed #c8b88c; margin: 14px 0; }
+    .rcpt-line { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 12px; color: var(--ink); padding: 2px 0; }
+    .rcpt-line .k { color: var(--ink-soft); }
+    .rcpt-sec { font-family: var(--mono); font-weight: 700; font-size: 11px; letter-spacing: 0.16em; color: var(--ink); margin: 6px 0; }
+
     .moment-list { list-style: none; margin: 0; padding: 0; }
-    .moment { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 3px 0; text-decoration: none;
-      font-family: var(--pixel); font-size: 16px; color: var(--ink); border-bottom: 1px dotted var(--line); }
-    .moment:last-child { border-bottom: 0; } .moment:hover { color: var(--pink); }
-    .moment .ts { color: var(--red); }
+    .moment { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 5px 0; text-decoration: none;
+      font-family: var(--mono); font-size: 12px; color: var(--ink); border-bottom: 1px dotted #d8caa0; }
+    .moment:last-child { border-bottom: 0; } .moment:hover { color: var(--blue); }
+    .moment .ts { font-weight: 700; color: var(--blue); }
+
     .quote-list { list-style: none; margin: 0; padding: 0; }
-    .quote { font-family: var(--pixel); font-size: 15px; line-height: 1.4; color: var(--ink); padding: 3px 0; }
-    .quote::before { content: '"'; } .quote::after { content: '"'; }
+    .quote { font-family: var(--mono); font-size: 11.5px; line-height: 1.5; color: var(--ink); padding: 4px 0; }
+    .quote::before { content: '"'; color: var(--blue); font-weight: 700; }
+    .quote::after  { content: '"'; color: var(--blue); font-weight: 700; }
 
     @media (max-width: 900px) {
       .work { grid-template-columns: 1fr; }
-      .collage { grid-template-columns: 1fr; gap: 26px; }
+      .collage { grid-template-columns: 1fr; gap: 28px; }
       .receipt { transform: none; max-width: 420px; }
     }
 
-    footer.foot { text-align: center; padding: 36px 0 20px; font-family: var(--pixel); font-size: 17px; color: var(--window); }
-    footer.foot .hand { font-family: var(--script); font-size: 26px; color: var(--yellow); }
+    footer.foot { text-align: center; padding: 44px 0 16px; color: rgba(255,255,255,0.6); font-size: 12px; }
+    footer.foot .hand { font-family: var(--display); font-size: 28px; color: var(--yellow); }
 
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; } }
     ::selection { background: var(--yellow); color: var(--ink); }
@@ -262,135 +311,133 @@
 
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="ic-doc" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="ic-deck" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 20h6M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   </svg>
 
-  <!-- Menu bar -->
-  <div class="menubar">
-    <div class="menubar-inner">
-      <span class="apple">YouTube<b>Analyst</b></span>
-      <span class="menu"><span>File</span><span>Edit</span><span>Run</span><span>Help</span></span>
+  <!-- Top bar -->
+  <header class="top">
+    <div class="top-inner">
+      <a href="#" class="brand"><span class="dot"></span> YouTube Analyst</a>
+      <span class="crumb">Single video · Weekly trends</span>
       <span class="spacer"></span>
-      <span id="server-status" class="status-pill"><span class="pulse"></span><span>connecting</span></span>
+      <span id="server-status" class="status-pill"><span class="pulse"></span><span>Connecting</span></span>
     </div>
-  </div>
+  </header>
 
-  <div class="wrap">
+  <main class="wrap">
 
     <!-- Hero -->
-    <header class="hero">
-      <span class="burst b1" aria-hidden="true"></span>
-      <span class="burst b2" aria-hidden="true"></span>
-      <h1 class="bigword">ANALYZE</h1>
-      <div class="subword">·YOUR·VIDEOS·EXE·</div>
-      <p class="tagline">
-        <b>Single Video</b> drops a YouTube link into Groq and prints a receipt — summary, key moments &amp; quotes.
-        <b>Weekly Trends</b> reads channels &amp; keywords, then ships the report to Sheets, Slides &amp; your inbox.
+    <section class="hero">
+      <div class="eyebrow">a tiny tool for big videos</div>
+      <h1>
+        <span class="top-line">Drop a link.</span>
+        <span class="script">get the gist.</span>
+      </h1>
+      <p class="lead">
+        <b>Single Video</b> turns a YouTube link into a summary, key moments &amp; standout quotes.
+        <b>Weekly Trends</b> ingests channels &amp; keywords, then ships the report to Sheets, Slides &amp; your inbox.
       </p>
-    </header>
+    </section>
 
-    <!-- Mode tabs -->
+    <!-- Mode pills -->
     <div class="mode-tabs" role="tablist">
-      <button class="mode-tab active" data-mode-tab="single" type="button" role="tab" aria-selected="true">single_video</button>
-      <button class="mode-tab" data-mode-tab="batch" type="button" role="tab" aria-selected="false">weekly_trends</button>
+      <button class="mode-tab active" data-mode-tab="single" type="button" role="tab" aria-selected="true">Single Video</button>
+      <button class="mode-tab" data-mode-tab="batch" type="button" role="tab" aria-selected="false">Weekly Trends</button>
     </div>
 
-    <!-- SINGLE MODE -->
+    <!-- SINGLE -->
     <section class="mode-active" data-mode="single">
-      <div class="win center">
-        <div class="win-bar"><span class="title">analyze.exe</span><span class="ctrls"><b>–</b><b>▢</b><b>✕</b></span></div>
-        <div class="win-body">
-          <form id="analyze-form">
-            <label class="field-label" for="url-input">Paste a YouTube link:</label>
-            <div class="url-row">
-              <input id="url-input" type="url" class="field url-input" placeholder="https://youtube.com/watch?v=..." autocomplete="off" spellcheck="false" />
-              <button id="run-btn-single" type="submit" class="btn primary">
-                <svg id="run-icon-single"><use href="#ic-play"></use></svg>
-                <span id="run-label-single">Run</span>
-              </button>
-              <button id="stop-btn-single" type="button" hidden class="btn small">Stop</button>
-            </div>
-            <div class="examples">
-              <span>shortcuts:</span>
-              <button type="button" class="example-link" data-url="https://www.youtube.com/watch?v=q8VePUwjB9Y">lex fridman</button>
-              <button type="button" class="example-link" data-url="https://www.youtube.com/watch?v=ZG7U6gT8tZk">andrej karpathy</button>
-            </div>
-          </form>
+      <form id="analyze-form">
+        <div class="url-row">
+          <div class="pill-input">
+            <svg class="mag"><use href="#ic-search"></use></svg>
+            <input id="url-input" type="url" class="url-input" placeholder="paste a youtube link" autocomplete="off" spellcheck="false" />
+          </div>
+          <button id="run-btn-single" type="submit" class="btn-yellow wide">
+            <svg id="run-icon-single"><use href="#ic-play"></use></svg>
+            <span id="run-label-single">Analyze</span>
+          </button>
+          <button id="stop-btn-single" type="button" hidden class="btn-ghost">Stop</button>
         </div>
-      </div>
+        <div class="examples">
+          <span>try:</span>
+          <button type="button" class="example-link" data-url="https://www.youtube.com/watch?v=q8VePUwjB9Y">lex fridman</button>
+          <button type="button" class="example-link" data-url="https://www.youtube.com/watch?v=ZG7U6gT8tZk">andrej karpathy</button>
+        </div>
+      </form>
     </section>
 
-    <!-- BATCH MODE -->
+    <!-- BATCH -->
     <section data-mode="batch">
-      <div class="win center" style="max-width:860px;">
-        <div class="win-bar"><span class="title">weekly_report.exe</span><span class="ctrls"><b>–</b><b>▢</b><b>✕</b></span></div>
-        <div class="win-body">
-          <form id="run-form">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px 36px;">
-              <div>
-                <div class="label-strong">Sources</div>
-                <label class="field-label" for="channels">YouTube channels</label>
-                <input id="channels" type="text" class="field" placeholder="@mkbhd, @verge, UCxxx..." autocomplete="off" />
-                <p class="field-help">Comma-separated handles (@) or channel IDs (UC…).</p>
-                <label class="field-label" for="keywords" style="margin-top:16px;">Keywords</label>
-                <input id="keywords" type="text" class="field" placeholder="ai, productivity, robotics" autocomplete="off" />
-                <p class="field-help">Comma-separated search terms.</p>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:22px;">
-                <div>
-                  <div class="label-strong">Window</div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                    <div><label class="field-label" for="lookback">Lookback (days)</label><input id="lookback" type="number" min="1" max="90" value="7" class="field" /></div>
-                    <div><label class="field-label" for="maxResults">Max / source</label><input id="maxResults" type="number" min="1" max="50" value="10" class="field" /></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="label-strong">Outputs</div>
-                  <label class="check-row"><input id="opt-sheets" type="checkbox" class="check" checked /><span>Write to Google Sheets</span></label>
-                  <label class="check-row"><input id="opt-slides" type="checkbox" class="check" checked /><span>Create or update Google Slides</span></label>
-                  <label class="check-row"><input id="opt-email" type="checkbox" class="check" checked /><span>Send email via Gmail</span></label>
-                </div>
+      <form id="run-form" class="card">
+        <div class="card-pad" style="display:grid;grid-template-columns:1fr 1fr;gap:30px 40px;">
+          <div>
+            <div class="label-section">Sources</div>
+            <label class="field-label" for="channels">YouTube Channels</label>
+            <input id="channels" type="text" class="field" placeholder="@mkbhd, @verge, UCxxx..." autocomplete="off" />
+            <p class="field-help">Comma-separated handles (@) or channel IDs (UC…).</p>
+            <label class="field-label" for="keywords" style="margin-top:18px;">Keywords</label>
+            <input id="keywords" type="text" class="field" placeholder="ai, productivity, robotics" autocomplete="off" />
+            <p class="field-help">Comma-separated search terms.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:24px;">
+            <div>
+              <div class="label-section">Window</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div><label class="field-label" for="lookback">Lookback (days)</label><input id="lookback" type="number" min="1" max="90" value="7" class="field" /></div>
+                <div><label class="field-label" for="maxResults">Max per source</label><input id="maxResults" type="number" min="1" max="50" value="10" class="field" /></div>
               </div>
             </div>
-            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-top:20px;padding-top:16px;border-top:2px solid var(--line);">
-              <p style="margin:0;font-family:var(--pixel);font-size:16px;color:var(--gray);">first run saves SPREADSHEET_ID &amp; PRESENTATION_ID to .env</p>
-              <div style="display:flex;gap:10px;">
-                <button id="stop-btn-batch" type="button" hidden class="btn small">Stop</button>
-                <button id="run-btn-batch" type="submit" class="btn primary">
-                  <svg id="run-icon-batch"><use href="#ic-play"></use></svg>
-                  <span id="run-label-batch">Run report</span>
-                </button>
-              </div>
+            <div>
+              <div class="label-section">Outputs</div>
+              <label class="check-row"><input id="opt-sheets" type="checkbox" class="check" checked /><span>Write to Google Sheets</span></label>
+              <label class="check-row"><input id="opt-slides" type="checkbox" class="check" checked /><span>Create or update Google Slides</span></label>
+              <label class="check-row"><input id="opt-email" type="checkbox" class="check" checked /><span>Send email via Gmail</span></label>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:18px clamp(20px,3vw,32px);border-top:1px solid var(--line);">
+          <p style="margin:0;font-family:var(--mono);font-size:11px;color:var(--muted);">first run saves SPREADSHEET_ID &amp; PRESENTATION_ID to .env</p>
+          <div style="display:flex;gap:10px;">
+            <button id="stop-btn-batch" type="button" hidden class="btn-ghost dark">Stop</button>
+            <button id="run-btn-batch" type="submit" class="btn-yellow">
+              <svg id="run-icon-batch"><use href="#ic-play"></use></svg>
+              <span id="run-label-batch">Run weekly report</span>
+            </button>
+          </div>
+        </div>
+      </form>
     </section>
 
-    <!-- Work: pipeline + terminal -->
+    <!-- Work area -->
     <section class="work" id="work">
-      <div class="win">
-        <div class="win-bar"><span class="title">tasks</span><span class="ctrls"><b>–</b><b>▢</b><b>✕</b></span></div>
-        <div class="win-body">
-          <ol class="steps mode-active" data-mode="single" id="pipeline-single">
-            <li class="step" data-step="parse"><span class="step-num">1</span><span class="step-text">parse the url</span><span class="dot"></span></li>
-            <li class="step" data-step="meta"><span class="step-num">2</span><span class="step-text">fetch video metadata</span><span class="dot"></span></li>
-            <li class="step" data-step="transcript"><span class="step-num">3</span><span class="step-text">fetch transcript</span><span class="dot"></span></li>
-            <li class="step" data-step="summarize"><span class="step-num">4</span><span class="step-text">summarize via groq</span><span class="dot"></span></li>
-          </ol>
-          <ol class="steps" data-mode="batch" id="pipeline-batch">
-            <li class="step" data-step="fetch"><span class="step-num">1</span><span class="step-text">fetch videos</span><span class="dot"></span></li>
-            <li class="step" data-step="analyze"><span class="step-num">2</span><span class="step-text">analyze trends</span><span class="dot"></span></li>
-            <li class="step" data-step="sheets"><span class="step-num">3</span><span class="step-text">write to sheets</span><span class="dot"></span></li>
-            <li class="step" data-step="slides"><span class="step-num">4</span><span class="step-text">build slides</span><span class="dot"></span></li>
-            <li class="step" data-step="email"><span class="step-num">5</span><span class="step-text">send email</span><span class="dot"></span></li>
-          </ol>
-        </div>
+      <div>
+        <h2 class="panel-title">the set list</h2>
+        <ol class="steps mode-active" data-mode="single" id="pipeline-single">
+          <li class="step" data-step="parse"><span class="step-num">01</span><span class="step-text">parse the url</span><span class="dot"></span></li>
+          <li class="step" data-step="meta"><span class="step-num">02</span><span class="step-text">fetch video metadata</span><span class="dot"></span></li>
+          <li class="step" data-step="transcript"><span class="step-num">03</span><span class="step-text">fetch transcript</span><span class="dot"></span></li>
+          <li class="step" data-step="summarize"><span class="step-num">04</span><span class="step-text">summarize via groq</span><span class="dot"></span></li>
+        </ol>
+        <ol class="steps" data-mode="batch" id="pipeline-batch">
+          <li class="step" data-step="fetch"><span class="step-num">01</span><span class="step-text">fetch videos</span><span class="dot"></span></li>
+          <li class="step" data-step="analyze"><span class="step-num">02</span><span class="step-text">analyze trends</span><span class="dot"></span></li>
+          <li class="step" data-step="sheets"><span class="step-num">03</span><span class="step-text">write to sheets</span><span class="dot"></span></li>
+          <li class="step" data-step="slides"><span class="step-num">04</span><span class="step-text">build slides</span><span class="dot"></span></li>
+          <li class="step" data-step="email"><span class="step-num">05</span><span class="step-text">send email</span><span class="dot"></span></li>
+        </ol>
       </div>
 
-      <div class="win term">
-        <div class="win-bar"><span class="title">analyst.log</span><button id="clear-log" class="console-clear">clear</button></div>
+      <div class="console">
+        <div class="console-bar">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="name">analyst.log</span>
+          </div>
+          <button id="clear-log" class="console-clear">clear</button>
+        </div>
         <div id="log" class="log-body"><div class="ll-meta">pick a mode, fill the inputs, and run.</div></div>
         <div id="batch-strip" class="batch-strip" hidden>
           <a id="link-sheet" class="link-sheet" target="_blank" rel="noopener" hidden><svg style="width:14px;height:14px"><use href="#ic-doc"></use></svg> open google sheet</a>
@@ -399,7 +446,7 @@
       </div>
     </section>
 
-    <!-- OUTPUT: receipt collage -->
+    <!-- OUTPUT -->
     <section id="result" hidden>
       <div class="collage">
         <div>
@@ -436,11 +483,11 @@
     </section>
 
     <footer class="foot">
-      <span class="hand">youtube analyst</span><br/>
+      <div class="hand">youtube analyst</div>
       python · youtube-transcript-api · groq · sheets · slides · gmail
     </footer>
 
-  </div>
+  </main>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -467,7 +514,7 @@
         el.classList.toggle("mode-active", el.dataset.mode === mode);
       });
       logEl.innerHTML = `<div class="ll-meta">${mode === "single"
-        ? "paste a youtube url above and press run."
+        ? "paste a youtube url above and press analyze."
         : "fill in channels and keywords, then run the report."}</div>`;
       resetSteps();
       resultEl.hidden = true;
@@ -506,13 +553,13 @@
       if (rs) {
         rs.disabled = on; sb.hidden = !on;
         if (ic) ic.style.display = on ? "none" : "inline-block";
-        if (lb) lb.textContent = on ? "Running…" : "Run";
+        if (lb) lb.textContent = on ? "Analyzing…" : "Analyze";
       }
       const rb = $("run-btn-batch"), ib = $("run-icon-batch"), lbb = $("run-label-batch"), sbb = $("stop-btn-batch");
       if (rb) {
         rb.disabled = on; sbb.hidden = !on;
         if (ib) ib.style.display = on ? "none" : "inline-block";
-        if (lbb) lbb.textContent = on ? "Running…" : "Run report";
+        if (lbb) lbb.textContent = on ? "Running…" : "Run weekly report";
       }
     }
 
@@ -585,7 +632,7 @@
       $("r-summary").textContent = data.summary || "(no summary)";
       if (data.transcript_available === false) {
         const note = document.createElement("div");
-        note.style.cssText = "margin-top:12px;font-size:12.5px;color:var(--gray);font-style:italic;";
+        note.style.cssText = "margin-top:12px;font-size:12.5px;color:var(--muted);font-style:italic;";
         note.textContent = "Note: no captions available; summary is from metadata only.";
         $("r-summary").after(note);
       }
@@ -696,10 +743,10 @@
     async function pingServer() {
       try {
         const r = await fetch("/health");
-        if (r.ok) { serverStatus.className = "status-pill ready"; serverStatus.innerHTML = '<span class="pulse"></span><span>ready</span>'; }
+        if (r.ok) { serverStatus.className = "status-pill ready"; serverStatus.innerHTML = '<span class="pulse"></span><span>Server Ready</span>'; }
         else throw new Error("bad");
       } catch (_) {
-        serverStatus.className = "status-pill offline"; serverStatus.innerHTML = '<span class="pulse"></span><span>offline</span>';
+        serverStatus.className = "status-pill offline"; serverStatus.innerHTML = '<span class="pulse"></span><span>Server Offline</span>';
       }
     }
     pingServer();
